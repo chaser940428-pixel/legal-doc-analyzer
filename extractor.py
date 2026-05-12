@@ -1,13 +1,14 @@
 """
-Structured clause extraction using Anthropic Claude.
+Structured clause extraction using Google Gemini.
 """
 
 import json
 import os
 
-import anthropic
+import google.generativeai as genai
 
-client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 CLAUSE_TYPES = {
     "termination": "What are the conditions or procedures for terminating this agreement?",
@@ -23,7 +24,7 @@ EXTRACT_PROMPT = """\
 You are a legal analyst. Based on the contract text below, answer this specific question.
 
 Be concise (2-4 sentences). If the contract does not address this, return null.
-Return ONLY valid JSON: {{"found": true/false, "summary": "...", "quote": "relevant excerpt or null"}}
+Return ONLY valid JSON with no markdown: {{"found": true/false, "summary": "...", "quote": "relevant excerpt or null"}}
 
 Question: {question}
 
@@ -37,16 +38,10 @@ def extract_clauses(full_text: str, max_chars: int = 12000) -> dict:
 
     for clause_key, question in CLAUSE_TYPES.items():
         try:
-            response = client.messages.create(
-                model="claude-haiku-4-5-20251001",
-                max_tokens=200,
-                messages=[{
-                    "role": "user",
-                    "content": EXTRACT_PROMPT.format(question=question, text=text_sample)
-                }],
+            response = model.generate_content(
+                EXTRACT_PROMPT.format(question=question, text=text_sample)
             )
-            raw = response.content[0].text.strip()
-            # Extract JSON from response
+            raw = response.text.strip()
             start = raw.find("{")
             end = raw.rfind("}") + 1
             results[clause_key] = json.loads(raw[start:end])

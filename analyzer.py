@@ -1,19 +1,20 @@
 """
 RAG pipeline for legal documents.
 
-Flow: PDF -> text -> chunks -> BM25 retrieval -> Claude answer
-Uses BM25 (free, no API needed) for retrieval + Anthropic Claude for generation.
+Flow: PDF -> text -> chunks -> BM25 retrieval -> Gemini answer
+Uses BM25 (free, no API needed) for retrieval + Google Gemini for generation.
 """
 
 import os
 import pickle
 from pathlib import Path
 
-import anthropic
+import google.generativeai as genai
 import pdfplumber
 from rank_bm25 import BM25Okapi
 
-client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 CACHE_FILE = Path(".doc_cache.pkl")
 
@@ -89,16 +90,11 @@ def answer(question: str, chunks: list[str], bm25: BM25Okapi) -> dict:
     relevant = retrieve(question, chunks, bm25)
     context = "\n\n---\n\n".join(relevant)
 
-    response = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=500,
-        messages=[{
-            "role": "user",
-            "content": ANSWER_PROMPT.format(context=context, question=question)
-        }],
+    response = model.generate_content(
+        ANSWER_PROMPT.format(context=context, question=question)
     )
 
     return {
-        "answer": response.content[0].text.strip(),
+        "answer": response.text.strip(),
         "sources": relevant,
     }
