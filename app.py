@@ -40,12 +40,12 @@ with st.sidebar:
                     tmp_path = tmp.name
 
                 clear_index()
-                chunks, embeddings = build_index(tmp_path)
+                chunks, bm25 = build_index(tmp_path)
                 full_text = extract_text(tmp_path)
                 os.unlink(tmp_path)
 
                 st.session_state["chunks"] = chunks
-                st.session_state["embeddings"] = embeddings
+                st.session_state["bm25"] = bm25
                 st.session_state["full_text"] = full_text
                 st.session_state["filename"] = uploaded.name
                 st.session_state["clauses"] = None
@@ -117,7 +117,7 @@ with tab2:
                 result = answer(
                     question,
                     st.session_state["chunks"],
-                    st.session_state["embeddings"],
+                    st.session_state["bm25"],
                 )
             st.write(result["answer"])
             with st.expander("Source excerpts"):

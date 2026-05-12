@@ -1,18 +1,19 @@
 """
 RAG pipeline for legal documents.
 
-Flow: PDF → text → chunks → embeddings → retrieve → answer
+Flow: PDF -> text -> chunks -> BM25 retrieval -> Claude answer
+Uses BM25 (free, no API needed) for retrieval + Anthropic Claude for generation.
 """
 
 import os
 import pickle
 from pathlib import Path
 
-import numpy as np
+import anthropic
 import pdfplumber
-from openai import OpenAI
+from rank_bm25 import BM25Okapi
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 CACHE_FILE = Path(".doc_cache.pkl")
 
@@ -36,35 +37,26 @@ def chunk_text(text: str, size: int = 500, overlap: int = 50) -> list[str]:
     return [c for c in chunks if len(c.strip()) > 50]
 
 
-# ── Embeddings ─────────────────────────────────────────────────────────────────
-
-def embed(texts: list[str]) -> np.ndarray:
-    response = client.embeddings.create(
-        model="text-embedding-3-small",
-        input=texts,
-    )
-    return np.array([item.embedding for item in response.data])
-
-
 # ── Index management ───────────────────────────────────────────────────────────
 
-def build_index(pdf_path: str) -> tuple[list[str], np.ndarray]:
+def build_index(pdf_path: str) -> tuple[list[str], BM25Okapi]:
     text = extract_text(pdf_path)
     chunks = chunk_text(text)
-    embeddings = embed(chunks)
+    tokenized = [c.lower().split() for c in chunks]
+    bm25 = BM25Okapi(tokenized)
 
     with open(CACHE_FILE, "wb") as f:
-        pickle.dump({"chunks": chunks, "embeddings": embeddings, "source": pdf_path}, f)
+        pickle.dump({"chunks": chunks, "bm25": bm25, "source": pdf_path}, f)
 
-    return chunks, embeddings
+    return chunks, bm25
 
 
-def load_index() -> tuple[list[str], np.ndarray, str]:
+def load_index() -> tuple[list[str], BM25Okapi, str]:
     if not CACHE_FILE.exists():
         raise FileNotFoundError("No document indexed yet.")
     with open(CACHE_FILE, "rb") as f:
         data = pickle.load(f)
-    return data["chunks"], data["embeddings"], data.get("source", "")
+    return data["chunks"], data["bm25"], data.get("source", "")
 
 
 def clear_index() -> None:
@@ -74,12 +66,9 @@ def clear_index() -> None:
 
 # ── Retrieval ──────────────────────────────────────────────────────────────────
 
-def retrieve(query: str, chunks: list[str], embeddings: np.ndarray, top_k: int = 4) -> list[str]:
-    q_vec = embed([query])[0]
-    scores = embeddings @ q_vec / (
-        np.linalg.norm(embeddings, axis=1) * np.linalg.norm(q_vec) + 1e-9
-    )
-    top_idx = np.argsort(scores)[::-1][:top_k]
+def retrieve(query: str, chunks: list[str], bm25: BM25Okapi, top_k: int = 4) -> list[str]:
+    scores = bm25.get_scores(query.lower().split())
+    top_idx = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:top_k]
     return [chunks[i] for i in top_idx]
 
 
@@ -96,21 +85,20 @@ Document excerpts:
 Question: {question}"""
 
 
-def answer(question: str, chunks: list[str], embeddings: np.ndarray) -> dict:
-    relevant = retrieve(question, chunks, embeddings)
+def answer(question: str, chunks: list[str], bm25: BM25Okapi) -> dict:
+    relevant = retrieve(question, chunks, bm25)
     context = "\n\n---\n\n".join(relevant)
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
+    response = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=500,
         messages=[{
             "role": "user",
             "content": ANSWER_PROMPT.format(context=context, question=question)
         }],
-        max_tokens=500,
-        temperature=0,
     )
 
     return {
-        "answer": response.choices[0].message.content.strip(),
+        "answer": response.content[0].text.strip(),
         "sources": relevant,
     }

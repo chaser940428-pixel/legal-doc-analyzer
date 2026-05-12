@@ -1,16 +1,13 @@
 """
-Structured clause extraction.
-
-Auto-extracts standardized fields from any contract without user prompting.
-Add new clause types by extending CLAUSE_TYPES — no other changes needed.
+Structured clause extraction using Anthropic Claude.
 """
 
 import json
 import os
 
-from openai import OpenAI
+import anthropic
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 CLAUSE_TYPES = {
     "termination": "What are the conditions or procedures for terminating this agreement?",
@@ -35,27 +32,24 @@ Contract text:
 
 
 def extract_clauses(full_text: str, max_chars: int = 12000) -> dict:
-    """
-    Extract all standard clause types from a contract.
-    Truncates input to avoid token limits while keeping most contracts intact.
-    """
     text_sample = full_text[:max_chars]
     results = {}
 
     for clause_key, question in CLAUSE_TYPES.items():
         try:
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
+            response = client.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=200,
                 messages=[{
                     "role": "user",
                     "content": EXTRACT_PROMPT.format(question=question, text=text_sample)
                 }],
-                max_tokens=200,
-                temperature=0,
-                response_format={"type": "json_object"},
             )
-            raw = response.choices[0].message.content.strip()
-            results[clause_key] = json.loads(raw)
+            raw = response.content[0].text.strip()
+            # Extract JSON from response
+            start = raw.find("{")
+            end = raw.rfind("}") + 1
+            results[clause_key] = json.loads(raw[start:end])
         except Exception as e:
             results[clause_key] = {"found": False, "summary": f"Extraction error: {e}", "quote": None}
 
