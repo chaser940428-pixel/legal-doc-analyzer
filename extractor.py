@@ -5,9 +5,9 @@ Structured clause extraction using Google Gemini.
 import json
 import os
 
-from google import genai
+from groq import Groq
 
-client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 CLAUSE_TYPES = {
     "termination": "What are the conditions or procedures for terminating this agreement?",
@@ -36,11 +36,12 @@ def extract_clauses(full_text: str, max_chars: int = 12000) -> dict:
     results = {}
     for clause_key, question in CLAUSE_TYPES.items():
         try:
-            response = client.models.generate_content(
-                model="gemini-2.0-flash-lite",
-                contents=EXTRACT_PROMPT.format(question=question, text=text_sample),
+            response = client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=[{"role": "user", "content": EXTRACT_PROMPT.format(question=question, text=text_sample)}],
+                max_tokens=200,
             )
-            raw = response.text.strip()
+            raw = response.choices[0].message.content.strip()
             start = raw.find("{")
             end = raw.rfind("}") + 1
             results[clause_key] = json.loads(raw[start:end])

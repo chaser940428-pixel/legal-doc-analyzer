@@ -9,10 +9,10 @@ import pickle
 from pathlib import Path
 
 import pdfplumber
-from google import genai
+from groq import Groq
 from rank_bm25 import BM25Okapi
 
-client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 CACHE_FILE = Path(".doc_cache.pkl")
 
@@ -75,8 +75,9 @@ Question: {question}"""
 def answer(question: str, chunks: list[str], bm25: BM25Okapi) -> dict:
     relevant = retrieve(question, chunks, bm25)
     context = "\n\n---\n\n".join(relevant)
-    response = client.models.generate_content(
-        model="gemini-2.0-flash-lite",
-        contents=ANSWER_PROMPT.format(context=context, question=question),
+    response = client.chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=[{"role": "user", "content": ANSWER_PROMPT.format(context=context, question=question)}],
+        max_tokens=500,
     )
-    return {"answer": response.text.strip(), "sources": relevant}
+    return {"answer": response.choices[0].message.content.strip(), "sources": relevant}
