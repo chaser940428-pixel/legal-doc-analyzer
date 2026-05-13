@@ -14,6 +14,8 @@ load_dotenv()
 
 from analyzer import answer, build_index, extract_text
 from extractor import CLAUSE_LABELS, extract_clauses
+from risk import RISK_LEVELS, assess_risks
+from report import generate_report
 
 # ── Page config ────────────────────────────────────────────────────────────────
 
@@ -24,7 +26,7 @@ st.set_page_config(
 )
 
 st.title("⚖️ Legal Document Analyzer")
-st.caption("Upload a contract → get instant clause extraction + natural language Q&A")
+st.caption("Upload a contract → get instant clause extraction + risk assessment + natural language Q&A")
 
 # ── Sidebar: upload ────────────────────────────────────────────────────────────
 
@@ -49,6 +51,7 @@ with st.sidebar:
                     st.session_state["full_text"] = full_text
                     st.session_state["filename"] = uploaded.name
                     st.session_state["clauses"] = None
+                    st.session_state["risks"] = None
                     st.session_state["chat"] = []
 
                     st.success(f"Indexed {len(chunks)} sections")
@@ -70,29 +73,79 @@ if "chunks" not in st.session_state:
 
 tab1, tab2 = st.tabs(["Key Clauses", "Ask Anything"])
 
-# ── Tab 1: Auto-extracted clauses ──────────────────────────────────────────────
+# ── Tab 1: Auto-extracted clauses + risk assessment ────────────────────────────
 
 with tab1:
     if st.session_state.get("clauses") is None:
         if st.button("Extract key clauses", type="primary"):
-            with st.spinner("Extracting clauses... (this takes ~15 seconds)"):
-                st.session_state["clauses"] = extract_clauses(st.session_state["full_text"])
+            with st.spinner("Extracting clauses and assessing risks... (~20 seconds)"):
+                clauses = extract_clauses(st.session_state["full_text"])
+                risks = assess_risks(clauses)
+                st.session_state["clauses"] = clauses
+                st.session_state["risks"] = risks
 
     clauses = st.session_state.get("clauses")
+    risks = st.session_state.get("risks") or {}
+
     if clauses:
+        # Overall risk banner
+        overall = risks.get("overall", {})
+        if overall:
+            level = overall.get("level", "low")
+            summary = overall.get("summary", "")
+            icon = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(level, "⚪")
+            label = {"high": "High Risk", "medium": "Medium Risk", "low": "Low Risk"}.get(level, "")
+            if level == "high":
+                st.error(f"{icon} **Overall Risk: {label}** — {summary}")
+            elif level == "medium":
+                st.warning(f"{icon} **Overall Risk: {label}** — {summary}")
+            else:
+                st.success(f"{icon} **Overall Risk: {label}** — {summary}")
+
+        st.divider()
+
+        # Clause cards
         cols = st.columns(2)
         for i, (key, label) in enumerate(CLAUSE_LABELS.items()):
             result = clauses.get(key, {})
+            risk = risks.get(key, {})
+            risk_level = risk.get("level", "none")
+            risk_display = RISK_LEVELS.get(risk_level, "")
+
             with cols[i % 2]:
                 with st.container(border=True):
-                    if result.get("found"):
+                    col_title, col_badge = st.columns([3, 1])
+                    with col_title:
                         st.markdown(f"**{label}**")
+                    with col_badge:
+                        st.markdown(f"<div style='text-align:right'>{risk_display}</div>", unsafe_allow_html=True)
+
+                    if result.get("found"):
                         st.write(result.get("summary", "—"))
                         if result.get("quote"):
                             st.caption(f"> {result['quote']}")
                     else:
-                        st.markdown(f"**{label}**")
                         st.caption("Not found in document")
+
+                    if risk.get("reason"):
+                        st.caption(f"_{risk['reason']}_")
+
+        st.divider()
+
+        # Download report
+        report_bytes = generate_report(
+            st.session_state.get("filename", "document.pdf"),
+            clauses,
+            risks,
+            CLAUSE_LABELS,
+        )
+        st.download_button(
+            label="Download Analysis Report (PDF)",
+            data=report_bytes,
+            file_name="legal_analysis_report.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+        )
 
 # ── Tab 2: Q&A ─────────────────────────────────────────────────────────────────
 
