@@ -79,7 +79,11 @@ with tab1:
     if st.session_state.get("clauses") is None:
         if st.button("Extract key clauses", type="primary"):
             with st.spinner("Extracting clauses and assessing risks... (~20 seconds)"):
-                clauses = extract_clauses(st.session_state["full_text"])
+                clauses = extract_clauses(
+                    st.session_state["full_text"],
+                    chunks=st.session_state["chunks"],
+                    bm25=st.session_state["bm25"],
+                )
                 risks = assess_risks(clauses)
                 st.session_state["clauses"] = clauses
                 st.session_state["risks"] = risks
