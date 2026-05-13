@@ -67,7 +67,7 @@ def assess_risks(clauses: dict) -> dict:
         response = client.chat.completions.create(
             model="llama-3.1-8b-instant",
             messages=[{"role": "user", "content": RISK_PROMPT.format(clauses=clause_text)}],
-            max_tokens=600,
+            max_tokens=900,
             temperature=0,
             response_format={"type": "json_object"},
         )
@@ -75,5 +75,5 @@ def assess_risks(clauses: dict) -> dict:
         start = raw.find("{")
         end = raw.rfind("}") + 1
         return json.loads(raw[start:end])
-    except Exception:
-        return {}
+    except Exception as e:
+        return {"_error": str(e)}

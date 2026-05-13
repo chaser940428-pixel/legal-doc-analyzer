@@ -44,7 +44,6 @@ with st.sidebar:
                 try:
                     chunks, bm25 = build_index(tmp_path)
                     full_text = extract_text(tmp_path)
-                    os.unlink(tmp_path)
 
                     st.session_state["chunks"] = chunks
                     st.session_state["bm25"] = bm25
@@ -53,11 +52,15 @@ with st.sidebar:
                     st.session_state["clauses"] = None
                     st.session_state["risks"] = None
                     st.session_state["chat"] = []
+                    st.session_state["report"] = None
 
                     st.success(f"Indexed {len(chunks)} sections")
                 except ValueError as e:
-                    os.unlink(tmp_path)
                     st.error(str(e))
+                except Exception as e:
+                    st.error(f"Failed to process document: {e}")
+                finally:
+                    os.unlink(tmp_path)
 
     if "filename" in st.session_state:
         st.info(f"Active: {st.session_state['filename']}")
@@ -92,6 +95,9 @@ with tab1:
     risks = st.session_state.get("risks") or {}
 
     if clauses:
+        if risks.get("_error"):
+            st.warning(f"Risk assessment failed: {risks['_error']}")
+
         # Overall risk banner
         overall = risks.get("overall", {})
         if overall:
@@ -136,16 +142,17 @@ with tab1:
 
         st.divider()
 
-        # Download report
-        report_bytes = generate_report(
-            st.session_state.get("filename", "document.pdf"),
-            clauses,
-            risks,
-            CLAUSE_LABELS,
-        )
+        # Download report — generate once and cache in session state
+        if st.session_state.get("report") is None:
+            st.session_state["report"] = generate_report(
+                st.session_state.get("filename", "document.pdf"),
+                clauses,
+                risks,
+                CLAUSE_LABELS,
+            )
         st.download_button(
             label="Download Analysis Report (PDF)",
-            data=report_bytes,
+            data=st.session_state["report"],
             file_name="legal_analysis_report.pdf",
             mime="application/pdf",
             use_container_width=True,
@@ -180,9 +187,10 @@ with tab2:
                     st.session_state["bm25"],
                 )
             st.write(result["answer"])
-            with st.expander("Source excerpts"):
-                for i, src in enumerate(result["sources"], 1):
-                    st.caption(f"[{i}] {src[:300]}...")
+            if result["sources"]:
+                with st.expander("Source excerpts"):
+                    for i, src in enumerate(result["sources"], 1):
+                        st.caption(f"[{i}] {src[:300]}...")
 
         st.session_state["chat"].append({
             "role": "assistant",

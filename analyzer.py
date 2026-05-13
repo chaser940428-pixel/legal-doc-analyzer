@@ -41,7 +41,7 @@ def build_index(pdf_path: str) -> tuple[list[str], BM25Okapi]:
     return chunks, bm25
 
 
-def retrieve(query: str, chunks: list[str], bm25: BM25Okapi, top_k: int = 2) -> list[str]:
+def retrieve(query: str, chunks: list[str], bm25: BM25Okapi, top_k: int = 3) -> list[str]:
     scores = bm25.get_scores(query.lower().split())
     top_idx = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:top_k]
     return [chunks[i] for i in top_idx]
@@ -61,9 +61,12 @@ Question: {question}"""
 def answer(question: str, chunks: list[str], bm25: BM25Okapi) -> dict:
     relevant = retrieve(question, chunks, bm25)
     context = "\n\n---\n\n".join(relevant)[:3000]
-    response = client.chat.completions.create(
-        model="llama-3.1-8b-instant",
-        messages=[{"role": "user", "content": ANSWER_PROMPT.format(context=context, question=question)}],
-        max_tokens=500,
-    )
-    return {"answer": response.choices[0].message.content.strip(), "sources": relevant}
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[{"role": "user", "content": ANSWER_PROMPT.format(context=context, question=question)}],
+            max_tokens=500,
+        )
+        return {"answer": response.choices[0].message.content.strip(), "sources": relevant}
+    except Exception as e:
+        return {"answer": f"Sorry, an error occurred while answering: {e}", "sources": []}
