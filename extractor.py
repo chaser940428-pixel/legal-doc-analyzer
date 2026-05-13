@@ -43,7 +43,7 @@ Contract text:
 {text}"""
 
 
-def extract_clauses(full_text: str, max_chars: int = 8000) -> dict:
+def extract_clauses(full_text: str, max_chars: int = 12000) -> dict:
     text_sample = full_text[:max_chars]
     try:
         response = client.chat.completions.create(
