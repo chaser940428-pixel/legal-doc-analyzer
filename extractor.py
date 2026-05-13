@@ -37,7 +37,7 @@ def extract_clauses(full_text: str, max_chars: int = 12000) -> dict:
     for clause_key, question in CLAUSE_TYPES.items():
         try:
             response = client.models.generate_content(
-                model="gemini-1.5-flash",
+                model="gemini-2.0-flash-lite",
                 contents=EXTRACT_PROMPT.format(question=question, text=text_sample),
             )
             raw = response.text.strip()

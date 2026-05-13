@@ -76,7 +76,7 @@ def answer(question: str, chunks: list[str], bm25: BM25Okapi) -> dict:
     relevant = retrieve(question, chunks, bm25)
     context = "\n\n---\n\n".join(relevant)
     response = client.models.generate_content(
-        model="gemini-1.5-flash",
+        model="gemini-2.0-flash-lite",
         contents=ANSWER_PROMPT.format(context=context, question=question),
     )
     return {"answer": response.text.strip(), "sources": relevant}
