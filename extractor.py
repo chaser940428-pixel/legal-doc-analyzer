@@ -55,8 +55,8 @@ You are a legal analyst. Read the contract excerpts below and extract the follow
 
 For each clause, return a JSON object with:
 - "found": true if the clause exists in the excerpts, false if not
-- "summary": 1-2 sentence plain-language summary (null if not found)
-- "quote": the most relevant verbatim excerpt (null if not found)
+- "summary": 1-2 sentence plain-language summary (null if not found). IMPORTANT: always include specific numbers, percentages, rates, and deadlines (e.g. "1.5% per month interest", "14-day notice period").
+- "quote": the most relevant verbatim excerpt (null if not found). Prefer quotes that contain specific rates, amounts, or conditions over general statements.
 
 Return ONLY valid JSON with this exact structure, no markdown:
 {{
