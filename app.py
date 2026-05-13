@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from analyzer import answer, build_index, clear_index, extract_text, load_index
+from analyzer import answer, build_index, extract_text
 from extractor import CLAUSE_LABELS, extract_clauses
 
 # ── Page config ────────────────────────────────────────────────────────────────
@@ -39,19 +39,22 @@ with st.sidebar:
                     tmp.write(uploaded.read())
                     tmp_path = tmp.name
 
-                clear_index()
-                chunks, bm25 = build_index(tmp_path)
-                full_text = extract_text(tmp_path)
-                os.unlink(tmp_path)
+                try:
+                    chunks, bm25 = build_index(tmp_path)
+                    full_text = extract_text(tmp_path)
+                    os.unlink(tmp_path)
 
-                st.session_state["chunks"] = chunks
-                st.session_state["bm25"] = bm25
-                st.session_state["full_text"] = full_text
-                st.session_state["filename"] = uploaded.name
-                st.session_state["clauses"] = None
-                st.session_state["chat"] = []
+                    st.session_state["chunks"] = chunks
+                    st.session_state["bm25"] = bm25
+                    st.session_state["full_text"] = full_text
+                    st.session_state["filename"] = uploaded.name
+                    st.session_state["clauses"] = None
+                    st.session_state["chat"] = []
 
-            st.success(f"Indexed {len(chunks)} sections")
+                    st.success(f"Indexed {len(chunks)} sections")
+                except ValueError as e:
+                    os.unlink(tmp_path)
+                    st.error(str(e))
 
     if "filename" in st.session_state:
         st.info(f"Active: {st.session_state['filename']}")

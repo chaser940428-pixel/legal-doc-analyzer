@@ -5,16 +5,12 @@ Flow: PDF -> text -> chunks -> BM25 retrieval -> Groq LLM answer
 """
 
 import os
-import pickle
-from pathlib import Path
 
 import pdfplumber
 from groq import Groq
 from rank_bm25 import BM25Okapi
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-
-CACHE_FILE = Path(".doc_cache.pkl")
 
 
 def extract_text(pdf_path: str) -> str:
@@ -35,24 +31,14 @@ def chunk_text(text: str, size: int = 300, overlap: int = 30) -> list[str]:
 def build_index(pdf_path: str) -> tuple[list[str], BM25Okapi]:
     text = extract_text(pdf_path)
     chunks = chunk_text(text)
+    if not chunks:
+        raise ValueError(
+            "No text could be extracted from this PDF. "
+            "Scanned or image-only PDFs are not supported — please use a text-based PDF."
+        )
     tokenized = [c.lower().split() for c in chunks]
     bm25 = BM25Okapi(tokenized)
-    with open(CACHE_FILE, "wb") as f:
-        pickle.dump({"chunks": chunks, "bm25": bm25, "source": pdf_path}, f)
     return chunks, bm25
-
-
-def load_index() -> tuple[list[str], BM25Okapi, str]:
-    if not CACHE_FILE.exists():
-        raise FileNotFoundError("No document indexed yet.")
-    with open(CACHE_FILE, "rb") as f:
-        data = pickle.load(f)
-    return data["chunks"], data["bm25"], data.get("source", "")
-
-
-def clear_index() -> None:
-    if CACHE_FILE.exists():
-        CACHE_FILE.unlink()
 
 
 def retrieve(query: str, chunks: list[str], bm25: BM25Okapi, top_k: int = 2) -> list[str]:

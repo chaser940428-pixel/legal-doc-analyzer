@@ -49,7 +49,7 @@ def extract_clauses(full_text: str, max_chars: int = 8000) -> dict:
         response = client.chat.completions.create(
             model="llama-3.1-8b-instant",
             messages=[{"role": "user", "content": EXTRACT_PROMPT.format(text=text_sample)}],
-            max_tokens=800,
+            max_tokens=1200,
         )
         raw = response.choices[0].message.content.strip()
         start = raw.find("{")
