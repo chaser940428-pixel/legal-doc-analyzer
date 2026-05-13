@@ -5,10 +5,9 @@ Structured clause extraction using Google Gemini.
 import json
 import os
 
-import google.generativeai as genai
+from google import genai
 
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-model = genai.GenerativeModel("gemini-1.5-flash")
+client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
 CLAUSE_TYPES = {
     "termination": "What are the conditions or procedures for terminating this agreement?",
@@ -35,11 +34,11 @@ Contract text:
 def extract_clauses(full_text: str, max_chars: int = 12000) -> dict:
     text_sample = full_text[:max_chars]
     results = {}
-
     for clause_key, question in CLAUSE_TYPES.items():
         try:
-            response = model.generate_content(
-                EXTRACT_PROMPT.format(question=question, text=text_sample)
+            response = client.models.generate_content(
+                model="gemini-1.5-flash",
+                contents=EXTRACT_PROMPT.format(question=question, text=text_sample),
             )
             raw = response.text.strip()
             start = raw.find("{")
@@ -47,7 +46,6 @@ def extract_clauses(full_text: str, max_chars: int = 12000) -> dict:
             results[clause_key] = json.loads(raw[start:end])
         except Exception as e:
             results[clause_key] = {"found": False, "summary": f"Extraction error: {e}", "quote": None}
-
     return results
 
 
