@@ -20,10 +20,20 @@ RISK_LEVELS = {
 RISK_PROMPT = """\
 You are a legal risk analyst. Review these contract clause summaries and assess the risk of each.
 
-Guidelines:
-- "high": dangerous terms, severely one-sided, missing critical protection (e.g. no liability cap, IP all goes to one party, immediate termination with no notice)
-- "medium": terms could be improved, somewhat one-sided, or clause is partially missing
-- "low": minor concerns, mostly standard terms
+Risk level guidelines:
+- "high": seriously dangerous or one-sided terms. Examples:
+    * No liability cap or unlimited damages exposure
+    * Immediate termination without notice or cause
+    * All IP ownership transferred to one party with no compensation
+    * Late payment interest above 12% annually (e.g. 1.5% per month = 18% per year is HIGH risk)
+    * Aggressive service suspension clauses
+    * Clause is completely missing and its absence creates serious legal exposure
+- "medium": terms that could be improved or are somewhat unfavorable. Examples:
+    * Late payment interest between 6-12% annually
+    * Short notice periods for termination
+    * Broad IP assignment language
+    * Clause is partially missing or vague
+- "low": minor concerns, mostly standard industry terms
 - "none": fair, complete, and balanced
 
 If a clause is marked MISSING, assess whether its absence creates risk.

@@ -23,15 +23,31 @@ CLAUSE_LABELS = {
     "term_duration": "Contract Duration",
 }
 
-# Keywords used to retrieve relevant chunks per clause type
-CLAUSE_KEYWORDS = {
-    "termination": "termination terminate end agreement notice cancel",
-    "payment_terms": "payment fee retainer invoice due late penalty interest",
-    "liability": "liability indemnify indemnification damages limit cap responsible",
-    "confidentiality": "confidential confidentiality non-disclosure secret proprietary",
-    "governing_law": "governing law jurisdiction court arbitration dispute",
-    "ip_ownership": "intellectual property IP ownership copyright work product assign",
-    "term_duration": "term duration period commencement expiry renewal effective date",
+# Keywords used to retrieve relevant chunks per clause type.
+# Each clause can have multiple queries to ensure comprehensive coverage.
+CLAUSE_KEYWORDS: dict[str, list[str]] = {
+    "termination": [
+        "termination terminate end agreement notice cancel",
+    ],
+    "payment_terms": [
+        "payment fee retainer invoice monthly milestone",
+        "late penalty interest overdue per month annum",  # separate query to catch late-payment clauses
+    ],
+    "liability": [
+        "liability indemnify indemnification damages limit cap responsible",
+    ],
+    "confidentiality": [
+        "confidential confidentiality non-disclosure secret proprietary",
+    ],
+    "governing_law": [
+        "governing law jurisdiction court arbitration dispute",
+    ],
+    "ip_ownership": [
+        "intellectual property IP ownership copyright work product assign",
+    ],
+    "term_duration": [
+        "term duration period commencement expiry renewal effective date",
+    ],
 }
 
 EXTRACT_PROMPT = """\
@@ -62,13 +78,14 @@ def _build_clause_context(chunks: list[str], bm25: BM25Okapi, top_k: int = 2) ->
     seen: set[int] = set()
     selected: list[str] = []
 
-    for keywords in CLAUSE_KEYWORDS.values():
-        scores = bm25.get_scores(keywords.lower().split())
-        top_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:top_k]
-        for idx in top_indices:
-            if idx not in seen:
-                seen.add(idx)
-                selected.append(chunks[idx])
+    for queries in CLAUSE_KEYWORDS.values():
+        for query in queries:
+            scores = bm25.get_scores(query.lower().split())
+            top_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:top_k]
+            for idx in top_indices:
+                if idx not in seen:
+                    seen.add(idx)
+                    selected.append(chunks[idx])
 
     return "\n\n---\n\n".join(selected)
 
