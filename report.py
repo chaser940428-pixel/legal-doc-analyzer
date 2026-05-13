@@ -67,7 +67,7 @@ def generate_report(filename: str, clauses: dict, risks: dict, clause_labels: di
         pdf.set_text_color(0, 0, 0)
         pdf.ln(3)
         pdf.set_font("Helvetica", "", 10)
-        pdf.multi_cell(0, 6, _s(overall.get("summary", "")))
+        pdf.multi_cell(pdf.epw, 6, _s(overall.get("summary", "")))
         pdf.ln(8)
 
     # ── Divider ─────────────────────────────────────────────────────────────
@@ -97,7 +97,7 @@ def generate_report(filename: str, clauses: dict, risks: dict, clause_labels: di
         # Summary
         if clause.get("found"):
             pdf.set_font("Helvetica", "", 10)
-            pdf.multi_cell(0, 5, _s(clause.get("summary", "")))
+            pdf.multi_cell(pdf.epw, 5, _s(clause.get("summary", "")))
 
             if clause.get("quote"):
                 pdf.set_font("Helvetica", "I", 9)
@@ -105,7 +105,7 @@ def generate_report(filename: str, clauses: dict, risks: dict, clause_labels: di
                 quote = clause["quote"]
                 if len(quote) > 200:
                     quote = quote[:200] + "..."
-                pdf.multi_cell(0, 5, _s(f'"{quote}"'))
+                pdf.multi_cell(pdf.epw, 5, _s(f'"{quote}"'))
                 pdf.set_text_color(0, 0, 0)
         else:
             pdf.set_font("Helvetica", "I", 10)
@@ -117,7 +117,7 @@ def generate_report(filename: str, clauses: dict, risks: dict, clause_labels: di
         if risk.get("reason"):
             pdf.set_font("Helvetica", "I", 9)
             pdf.set_text_color(r, g, b)
-            pdf.multi_cell(0, 5, _s(f"Risk note: {risk['reason']}"))
+            pdf.multi_cell(pdf.epw, 5, _s(f"Risk note: {risk['reason']}"))
             pdf.set_text_color(0, 0, 0)
 
         pdf.ln(5)
