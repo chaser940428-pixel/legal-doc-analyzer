@@ -1,5 +1,5 @@
 """
-Structured clause extraction using Google Gemini.
+Structured clause extraction using Groq LLM.
 """
 
 import json

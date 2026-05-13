@@ -1,7 +1,7 @@
 """
 RAG pipeline for legal documents.
 
-Flow: PDF -> text -> chunks -> BM25 retrieval -> Gemini answer
+Flow: PDF -> text -> chunks -> BM25 retrieval -> Groq LLM answer
 """
 
 import os

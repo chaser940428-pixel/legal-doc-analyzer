@@ -57,7 +57,7 @@ with st.sidebar:
         st.info(f"Active: {st.session_state['filename']}")
 
     st.divider()
-    st.caption("Built with OpenAI + Streamlit\ngithub.com/YOUR_USERNAME/legal-doc-analyzer")
+    st.caption("Built with Groq + Streamlit\ngithub.com/chaser940428-pixel/legal-doc-analyzer")
 
 # ── Main area ──────────────────────────────────────────────────────────────────
 
