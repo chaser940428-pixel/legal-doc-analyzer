@@ -2,7 +2,7 @@
 
 > Upload any contract PDF. Get instant structured clause extraction and plain-language Q&A — grounded in the document itself.
 
-**[Live Demo](https://chaser940428-pixel-legal-doc-analyzer-app-3msjpf.streamlit.app)** &nbsp;|&nbsp; Built with Groq + Streamlit &nbsp;|&nbsp; No API key needed to try
+**[Live Demo](https://legal-doc-analyzer-jdmijowrqdsr8jvz4rak6c.streamlit.app)** &nbsp;|&nbsp; Built with Groq + Streamlit &nbsp;|&nbsp; No API key needed to try
 
 ---
 
