@@ -23,7 +23,7 @@ def extract_text(pdf_path: str) -> str:
     return "\n\n".join(pages)
 
 
-def chunk_text(text: str, size: int = 500, overlap: int = 50) -> list[str]:
+def chunk_text(text: str, size: int = 300, overlap: int = 30) -> list[str]:
     words = text.split()
     chunks, i = [], 0
     while i < len(words):
@@ -55,7 +55,7 @@ def clear_index() -> None:
         CACHE_FILE.unlink()
 
 
-def retrieve(query: str, chunks: list[str], bm25: BM25Okapi, top_k: int = 4) -> list[str]:
+def retrieve(query: str, chunks: list[str], bm25: BM25Okapi, top_k: int = 2) -> list[str]:
     scores = bm25.get_scores(query.lower().split())
     top_idx = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:top_k]
     return [chunks[i] for i in top_idx]
@@ -74,7 +74,7 @@ Question: {question}"""
 
 def answer(question: str, chunks: list[str], bm25: BM25Okapi) -> dict:
     relevant = retrieve(question, chunks, bm25)
-    context = "\n\n---\n\n".join(relevant)
+    context = "\n\n---\n\n".join(relevant)[:3000]
     response = client.chat.completions.create(
         model="llama-3.1-8b-instant",
         messages=[{"role": "user", "content": ANSWER_PROMPT.format(context=context, question=question)}],
