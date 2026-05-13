@@ -49,7 +49,9 @@ def extract_clauses(full_text: str, max_chars: int = 8000) -> dict:
         response = client.chat.completions.create(
             model="llama-3.1-8b-instant",
             messages=[{"role": "user", "content": EXTRACT_PROMPT.format(text=text_sample)}],
-            max_tokens=1200,
+            max_tokens=1500,
+            temperature=0,
+            response_format={"type": "json_object"},
         )
         raw = response.choices[0].message.content.strip()
         start = raw.find("{")

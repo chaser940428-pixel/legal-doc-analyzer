@@ -58,6 +58,8 @@ def assess_risks(clauses: dict) -> dict:
             model="llama-3.1-8b-instant",
             messages=[{"role": "user", "content": RISK_PROMPT.format(clauses=clause_text)}],
             max_tokens=600,
+            temperature=0,
+            response_format={"type": "json_object"},
         )
         raw = response.choices[0].message.content.strip()
         start = raw.find("{")
