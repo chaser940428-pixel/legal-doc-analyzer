@@ -1,5 +1,6 @@
 """
 Structured clause extraction using Groq LLM.
+All 7 clause types are extracted in a single API call to stay within free-tier limits.
 """
 
 import json
@@ -8,47 +9,6 @@ import os
 from groq import Groq
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-
-CLAUSE_TYPES = {
-    "termination": "What are the conditions or procedures for terminating this agreement?",
-    "payment_terms": "What are the payment amounts, schedules, and methods?",
-    "liability": "What are the liability limits or indemnification obligations?",
-    "confidentiality": "What confidentiality or non-disclosure obligations exist?",
-    "governing_law": "Which jurisdiction's law governs this agreement, and where are disputes resolved?",
-    "ip_ownership": "Who owns intellectual property created under this agreement?",
-    "term_duration": "What is the duration or effective period of this agreement?",
-}
-
-EXTRACT_PROMPT = """\
-You are a legal analyst. Based on the contract text below, answer this specific question.
-
-Be concise (2-4 sentences). If the contract does not address this, return null.
-Return ONLY valid JSON with no markdown: {{"found": true/false, "summary": "...", "quote": "relevant excerpt or null"}}
-
-Question: {question}
-
-Contract text:
-{text}"""
-
-
-def extract_clauses(full_text: str, max_chars: int = 12000) -> dict:
-    text_sample = full_text[:max_chars]
-    results = {}
-    for clause_key, question in CLAUSE_TYPES.items():
-        try:
-            response = client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                messages=[{"role": "user", "content": EXTRACT_PROMPT.format(question=question, text=text_sample)}],
-                max_tokens=200,
-            )
-            raw = response.choices[0].message.content.strip()
-            start = raw.find("{")
-            end = raw.rfind("}") + 1
-            results[clause_key] = json.loads(raw[start:end])
-        except Exception as e:
-            results[clause_key] = {"found": False, "summary": f"Extraction error: {e}", "quote": None}
-    return results
-
 
 CLAUSE_LABELS = {
     "termination": "Termination",
@@ -59,3 +19,42 @@ CLAUSE_LABELS = {
     "ip_ownership": "IP Ownership",
     "term_duration": "Contract Duration",
 }
+
+EXTRACT_PROMPT = """\
+You are a legal analyst. Read the contract text below and extract the following clauses.
+
+For each clause, return a JSON object with:
+- "found": true if the clause exists in the contract, false if not
+- "summary": 1-2 sentence plain-language summary (null if not found)
+- "quote": the most relevant verbatim excerpt (null if not found)
+
+Return ONLY valid JSON with this exact structure, no markdown:
+{{
+  "termination": {{"found": ..., "summary": "...", "quote": "..."}},
+  "payment_terms": {{"found": ..., "summary": "...", "quote": "..."}},
+  "liability": {{"found": ..., "summary": "...", "quote": "..."}},
+  "confidentiality": {{"found": ..., "summary": "...", "quote": "..."}},
+  "governing_law": {{"found": ..., "summary": "...", "quote": "..."}},
+  "ip_ownership": {{"found": ..., "summary": "...", "quote": "..."}},
+  "term_duration": {{"found": ..., "summary": "...", "quote": "..."}}
+}}
+
+Contract text:
+{text}"""
+
+
+def extract_clauses(full_text: str, max_chars: int = 4000) -> dict:
+    text_sample = full_text[:max_chars]
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[{"role": "user", "content": EXTRACT_PROMPT.format(text=text_sample)}],
+            max_tokens=800,
+        )
+        raw = response.choices[0].message.content.strip()
+        start = raw.find("{")
+        end = raw.rfind("}") + 1
+        return json.loads(raw[start:end])
+    except Exception as e:
+        error = {"found": False, "summary": f"Extraction error: {e}", "quote": None}
+        return {key: error for key in CLAUSE_LABELS}
