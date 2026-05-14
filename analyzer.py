@@ -49,7 +49,8 @@ def retrieve(query: str, chunks: list[str], bm25: BM25Okapi, top_k: int = 3) -> 
 
 ANSWER_PROMPT = """\
 You are a legal document analyst. Answer the question using ONLY the provided excerpts.
-If the answer is not in the excerpts, say "This is not addressed in the document."
+Respond in Traditional Chinese (繁體中文).
+If the answer is not in the excerpts, say "此文件中未涉及此問題。"
 Always quote the relevant part of the document to support your answer.
 
 Document excerpts:
@@ -58,8 +59,8 @@ Document excerpts:
 Question: {question}"""
 
 
-def answer(question: str, chunks: list[str], bm25: BM25Okapi) -> dict:
-    relevant = retrieve(question, chunks, bm25)
+def answer(question: str, chunks: list[str], bm25: BM25Okapi, retrieval_query: str | None = None) -> dict:
+    relevant = retrieve(retrieval_query or question, chunks, bm25)
     context = "\n\n---\n\n".join(relevant)[:3000]
     try:
         response = client.chat.completions.create(
@@ -69,4 +70,4 @@ def answer(question: str, chunks: list[str], bm25: BM25Okapi) -> dict:
         )
         return {"answer": response.choices[0].message.content.strip(), "sources": relevant}
     except Exception as e:
-        return {"answer": f"Sorry, an error occurred while answering: {e}", "sources": []}
+        return {"answer": f"抱歉，處理時發生錯誤：{e}", "sources": []}
