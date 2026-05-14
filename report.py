@@ -96,10 +96,12 @@ def generate_report(filename: str, clauses: dict, risks: dict, clause_labels: di
 
         # Summary
         if clause.get("found"):
+            pdf.set_x(pdf.l_margin)
             pdf.set_font("Helvetica", "", 10)
             pdf.multi_cell(pdf.epw, 5, _s(clause.get("summary", "")))
 
             if clause.get("quote"):
+                pdf.set_x(pdf.l_margin)
                 pdf.set_font("Helvetica", "I", 9)
                 pdf.set_text_color(80, 80, 80)
                 quote = clause["quote"]
@@ -115,6 +117,7 @@ def generate_report(filename: str, clauses: dict, risks: dict, clause_labels: di
 
         # Risk reason
         if risk.get("reason"):
+            pdf.set_x(pdf.l_margin)
             pdf.set_font("Helvetica", "I", 9)
             pdf.set_text_color(r, g, b)
             pdf.multi_cell(pdf.epw, 5, _s(f"Risk note: {risk['reason']}"))
