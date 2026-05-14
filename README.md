@@ -4,7 +4,7 @@
 
 **[Live Demo](https://legal-doc-analyzer-jdmijowrqdsr8jvz4rak6c.streamlit.app)** &nbsp;|&nbsp; Built with Groq + Streamlit &nbsp;|&nbsp; No API key needed to try
 
-![Legal Document Analyzer screenshot](screenshot.png)
+![Legal Document Analyzer screenshot](demo.png)
 
 ---
 
