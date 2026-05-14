@@ -280,6 +280,14 @@ with tab2:
                     st.rerun()
         st.markdown("---")
 
+    for msg in st.session_state["chat"]:
+        with st.chat_message(msg["role"]):
+            st.write(msg["content"])
+            if msg.get("sources"):
+                with st.expander("來源段落"):
+                    for i, src in enumerate(msg["sources"], 1):
+                        st.caption(f"[{i}] {src[:300]}…")
+
     question = st.chat_input("詢問合約內容…（中英文均可）")
 
     if question:
@@ -292,11 +300,3 @@ with tab2:
             "sources": result["sources"],
         })
         st.rerun()
-
-    for msg in st.session_state["chat"]:
-        with st.chat_message(msg["role"]):
-            st.write(msg["content"])
-            if msg.get("sources"):
-                with st.expander("來源段落"):
-                    for i, src in enumerate(msg["sources"], 1):
-                        st.caption(f"[{i}] {src[:300]}…")
