@@ -5,6 +5,7 @@ Flow: PDF -> text -> chunks -> BM25 retrieval -> Groq LLM answer
 """
 
 import os
+import re
 from typing import Optional
 
 import pdfplumber
@@ -43,7 +44,8 @@ def build_index(pdf_path: str) -> tuple[list[str], BM25Okapi]:
 
 
 def retrieve(query: str, chunks: list[str], bm25: BM25Okapi, top_k: int = 3) -> list[str]:
-    scores = bm25.get_scores(query.lower().split())
+    tokens = re.sub(r"[^\w\s]", " ", query.lower()).split()
+    scores = bm25.get_scores(tokens)
     top_idx = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:top_k]
     return [chunks[i] for i in top_idx]
 
