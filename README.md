@@ -2,7 +2,7 @@
 
 > Upload any contract PDF → auto-extract key clauses, assess legal risks, ask questions in plain language, and download a formatted report.
 
-**[Live Demo](https://legal-doc-analyzer-jdmijowrqdsr8jvz4rak6c.streamlit.app)** &nbsp;|&nbsp; Built with Groq + Streamlit &nbsp;|&nbsp; No API key needed to try
+**[Live Demo](https://legal-doc-analyzer-jdmijowrqdsr8jvz4rak6c.streamlit.app)** &nbsp;|&nbsp; Built with Groq + Streamlit &nbsp;|&nbsp; No API key needed to try &nbsp;|&nbsp; 繁中 / EN
 
 ![Legal Document Analyzer screenshot](demo.png)
 
@@ -52,7 +52,7 @@ Each clause is automatically rated 🔴 High / 🟡 Medium / 🟢 Low based on s
 - Missing clause where one is expected → assessed by absence
 
 ### 3. Plain-Language Q&A
-Ask anything about the document in natural language. Every answer cites the exact passage it came from.
+Ask anything about the document in natural language — in English or Traditional Chinese. Every answer cites the exact passage it came from.
 
 ### 4. Export PDF Report
 Download a formatted analysis report with clause summaries, verbatim quotes, and color-coded risk indicators.
@@ -62,11 +62,12 @@ Download a formatted analysis report with clause summaries, verbatim quotes, and
 ## How to use it
 
 1. Open the **[live demo](https://legal-doc-analyzer-jdmijowrqdsr8jvz4rak6c.streamlit.app)**
-2. Upload any PDF contract in the sidebar (try the included `sample_contract.pdf`)
-3. Click **Analyze document**
-4. **Key Clauses** tab → click **Extract key clauses** to get risk-assessed clause breakdown
-5. **Ask Anything** tab → ask questions in plain language
-6. Click **Download Analysis Report** for the PDF export
+2. Select your language (中文 / English) in the top-left toggle
+3. Upload a PDF contract in the sidebar, or click **▶ Try sample contract** to start immediately
+4. Click **Analyze document**
+5. **Key Clauses & Risk** tab → click **Extract key clauses** to get risk-assessed clause breakdown
+6. **Ask Anything** tab → ask questions in plain language (English or Chinese)
+7. Click **Download Analysis Report** for the PDF export
 
 No setup, no account, no API key needed.
 
