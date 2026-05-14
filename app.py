@@ -280,6 +280,19 @@ with tab2:
                     st.rerun()
         st.markdown("---")
 
+    question = st.chat_input("詢問合約內容…（中英文均可）")
+
+    if question:
+        with st.spinner("搜尋文件中…"):
+            result = answer(question, st.session_state["chunks"], st.session_state["bm25"])
+        st.session_state["chat"].append({"role": "user", "content": question})
+        st.session_state["chat"].append({
+            "role": "assistant",
+            "content": result["answer"],
+            "sources": result["sources"],
+        })
+        st.rerun()
+
     for msg in st.session_state["chat"]:
         with st.chat_message(msg["role"]):
             st.write(msg["content"])
@@ -287,25 +300,3 @@ with tab2:
                 with st.expander("來源段落"):
                     for i, src in enumerate(msg["sources"], 1):
                         st.caption(f"[{i}] {src[:300]}…")
-
-    question = st.chat_input("詢問合約內容…（中英文均可）")
-
-    if question:
-        st.session_state["chat"].append({"role": "user", "content": question})
-        with st.chat_message("user"):
-            st.write(question)
-
-        with st.chat_message("assistant"):
-            with st.spinner("搜尋文件中…"):
-                result = answer(question, st.session_state["chunks"], st.session_state["bm25"])
-            st.write(result["answer"])
-            if result["sources"]:
-                with st.expander("來源段落"):
-                    for i, src in enumerate(result["sources"], 1):
-                        st.caption(f"[{i}] {src[:300]}…")
-
-        st.session_state["chat"].append({
-            "role": "assistant",
-            "content": result["answer"],
-            "sources": result["sources"],
-        })
