@@ -5,6 +5,7 @@ Flow: PDF -> text -> chunks -> BM25 retrieval -> Groq LLM answer
 """
 
 import os
+from typing import Optional
 
 import pdfplumber
 from groq import Groq
@@ -59,7 +60,7 @@ Document excerpts:
 Question: {question}"""
 
 
-def answer(question: str, chunks: list[str], bm25: BM25Okapi, retrieval_query: str | None = None) -> dict:
+def answer(question: str, chunks: list[str], bm25: BM25Okapi, retrieval_query: Optional[str] = None) -> dict:
     relevant = retrieve(retrieval_query or question, chunks, bm25)
     context = "\n\n---\n\n".join(relevant)[:3000]
     try:
