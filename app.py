@@ -176,8 +176,7 @@ with st.sidebar:
     )
     new_lang = "zh" if lang_choice == "中文" else "en"
     if st.session_state["lang"] != new_lang:
-        for key in ["clauses", "risks", "chat", "report"]:
-            st.session_state.pop(key, None)
+        st.session_state.pop("chat", None)
         st.session_state["lang"] = new_lang
 
 lang = st.session_state["lang"]
