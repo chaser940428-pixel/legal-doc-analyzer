@@ -56,7 +56,7 @@ You are a legal analyst. Read the contract excerpts below and extract the follow
 
 For each clause, return a JSON object with:
 - "found": true if the clause exists in the excerpts, false if not
-- "summary": 1-2 sentence plain-language summary{lang_note} (null if not found). IMPORTANT: always include specific numbers, percentages, rates, and deadlines (e.g. "1.5% per month interest", "14-day notice period").
+- "summary": 1-2 sentence plain-language summary in English (null if not found). IMPORTANT: always include specific numbers, percentages, rates, and deadlines (e.g. "1.5% per month interest", "14-day notice period").
 - "quote": the most relevant verbatim excerpt (null if not found). Prefer quotes that contain specific rates, amounts, or conditions over general statements.
 
 Return ONLY valid JSON with this exact structure, no markdown:
@@ -91,11 +91,6 @@ def _build_clause_context(chunks: list[str], bm25: BM25Okapi, top_k: int = 2) ->
     return "\n\n---\n\n".join(selected)
 
 
-def _build_extract_prompt(lang: str) -> str:
-    note = " in Traditional Chinese (繁體中文)" if lang == "zh" else ""
-    return _EXTRACT_PROMPT_BASE.replace("{lang_note}", note)
-
-
 def extract_clauses(
     full_text: str,
     chunks: Optional[list] = None,
@@ -117,7 +112,7 @@ def extract_clauses(
     try:
         response = client.chat.completions.create(
             model="llama-3.1-8b-instant",
-            messages=[{"role": "user", "content": _build_extract_prompt(lang).format(text=text_sample)}],
+            messages=[{"role": "user", "content": _EXTRACT_PROMPT_BASE.format(text=text_sample)}],
             max_tokens=1500,
             temperature=0,
             response_format={"type": "json_object"},

@@ -53,9 +53,6 @@ Return ONLY valid JSON, no markdown:
   "overall": {{"level": "high|medium|low", "summary": "1-2 sentence overall assessment"}}
 }}"""
 
-_RISK_PROMPT_ZH = RISK_PROMPT + "\nProvide all 'reason' and 'summary' values in Traditional Chinese (繁體中文)."
-
-
 def assess_risks(clauses: dict, lang: str = "zh") -> dict:
     lines = []
     for key, data in clauses.items():
@@ -68,7 +65,7 @@ def assess_risks(clauses: dict, lang: str = "zh") -> dict:
     try:
         response = client.chat.completions.create(
             model="llama-3.1-8b-instant",
-            messages=[{"role": "user", "content": (RISK_PROMPT if lang == "en" else _RISK_PROMPT_ZH).format(clauses=clause_text)}],
+            messages=[{"role": "user", "content": RISK_PROMPT.format(clauses=clause_text)}],
             max_tokens=900,
             temperature=0,
             response_format={"type": "json_object"},
